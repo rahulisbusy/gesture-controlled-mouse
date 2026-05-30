@@ -6,8 +6,9 @@ import pyautogui
 import math
 from enum import IntEnum
 from ctypes import cast, POINTER
-from comtypes import CLSCTX_ALL
+from comtypes import CLSCTX_ALL, CoCreateInstance
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from comtypes.client import CreateObject
 from google.protobuf.json_format import MessageToDict
 import screen_brightness_control as sbcontrol
 
@@ -191,7 +192,7 @@ class HandRecog:
                 current_gesture = Gest.PINCH_MAJOR
 
         elif Gest.FIRST2 == self.finger :
-            point = [[class HandRecog)],[5,9]]
+            point = [[8,12],[5,9]]
             dist1 = self.get_dist(point[0])
             dist2 = self.get_dist(point[1])
             ratio = dist1/dist2
@@ -306,19 +307,19 @@ class Controller:
     def changesystemvolume():
         """sets system volume based on 'Controller.pinchlv'."""
         try:
-            from pycaw.pycaw import IAudioEndpointVolume
-            devices = AudioUtilities.GetSpeakers()
-            # Use QueryInterface for modern pycaw API
-            volume = devices.QueryInterface(IAudioEndpointVolume)
-            currentVolumeLv = volume.GetMasterVolumeLevelScalar()
+            from comtypes.client import CreateObject
+            # Create volume object using COM directly
+            volume_obj = CreateObject("{0D8AD3C1-3ADF-432D-B812-0A6B89160101}", interface=IAudioEndpointVolume)
+            
+            currentVolumeLv = volume_obj.GetMasterVolumeLevelScalar()
             currentVolumeLv += Controller.pinchlv / 50.0
             if currentVolumeLv > 1.0:
                 currentVolumeLv = 1.0
             elif currentVolumeLv < 0.0:
                 currentVolumeLv = 0.0
-            volume.SetMasterVolumeLevelScalar(currentVolumeLv, None)
+            volume_obj.SetMasterVolumeLevelScalar(currentVolumeLv, None)
         except Exception as e:
-            print(f"Warning: Could not change volume - {e}")
+            pass
     
     def scrollVertical():
         """scrolls on screen vertically."""
